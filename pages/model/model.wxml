@@ -1,4 +1,74 @@
 <view class="page">
-  <canvas id="webgl" type="webgl" class="webgl-canvas"></canvas>
-  <view class="hint">请把 GLB 模型放到 /assets/models/model.glb</view>
+  <view class="canvas-wrap">
+    <view class="model-frame">
+      <canvas
+        id="webgl"
+        type="webgl"
+        class="webgl-canvas"
+        bindtouchstart="onCanvasTouchStart"
+        bindtouchmove="onCanvasTouchMove"
+        bindtouchend="onCanvasTouchEnd"
+        bindtouchcancel="onCanvasTouchEnd"
+      ></canvas>
+    </view>
+  </view>
+
+  <view class="controls">
+    <view class="panel">
+      <view class="label-row">
+        <view class="label">视角缩放</view>
+        <view class="value">{{scalePercent}}%</view>
+      </view>
+      <slider
+        class="size-slider"
+        min="60"
+        max="100"
+        step="1"
+        value="{{scalePercent}}"
+        activeColor="#007aff"
+        backgroundColor="#d7d8dd"
+        block-color="#ffffff"
+        block-size="20"
+        bindchanging="onScaleChanging"
+        bindchange="onScaleChange"
+      />
+
+      <view class="label-row">
+        <view class="label">24电机（斜杆左右）</view>
+        <view class="value">{{armAngle}}°</view>
+      </view>
+      <slider
+        class="size-slider"
+        min="-135"
+        max="135"
+        step="1"
+        value="{{armAngle}}"
+        activeColor="#007aff"
+        backgroundColor="#d7d8dd"
+        block-color="#ffffff"
+        block-size="20"
+        bindchanging="onArmAngleChanging"
+        bindchange="onArmAngleChange"
+      />
+
+      <view class="label-row second-row">
+        <view class="label">35电机（灯头上下）</view>
+        <view class="value">{{headAngle}}°</view>
+      </view>
+      <slider
+        class="size-slider"
+        min="0"
+        max="50"
+        step="1"
+        value="{{headAngle}}"
+        activeColor="#007aff"
+        backgroundColor="#d7d8dd"
+        block-color="#ffffff"
+        block-size="20"
+        bindchanging="onHeadAngleChanging"
+        bindchange="onHeadAngleChange"
+      />
+      <view class="hint">单指旋转视角，双指缩放视角（60% - 100%）</view>
+    </view>
+  </view>
 </view>

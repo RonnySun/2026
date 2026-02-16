@@ -1,8 +1,29 @@
 .page {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background: #dddddf;
+}
+
+.canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 24rpx;
+}
+
+.model-frame {
+  width: 84%;
+  height: 76%;
+  border-radius: 22rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .webgl-canvas {
@@ -10,15 +31,50 @@
   height: 100%;
 }
 
-.hint {
-  position: absolute;
-  left: 24rpx;
-  right: 24rpx;
-  bottom: 24rpx;
-  padding: 16rpx 20rpx;
-  border-radius: 16rpx;
-  background: rgba(0, 0, 0, 0.55);
-  color: #ffffff;
+.controls {
+  padding: 10rpx 18rpx calc(10rpx + env(safe-area-inset-bottom));
+  background: rgba(228, 228, 232, 0.42);
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+.panel {
+  padding: 14rpx 16rpx 12rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10rpx 30rpx rgba(15, 23, 42, 0.12);
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4rpx;
+}
+
+.second-row {
+  margin-top: 4rpx;
+}
+
+.label {
+  color: #1c1c1e;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.value {
+  color: #1c1c1e;
   font-size: 24rpx;
+  font-weight: 600;
+}
+
+.size-slider {
+  margin: 0 0 6rpx;
+}
+
+.hint {
+  color: #6e6e73;
+  font-size: 21rpx;
   line-height: 1.5;
+  text-align: center;
 }
