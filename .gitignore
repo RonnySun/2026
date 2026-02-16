@@ -11,3 +11,7 @@
 # IDE
 .idea/
 .vscode/
+
+# Node
+node_modules/
+miniprogram_npm/

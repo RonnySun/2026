@@ -1,0 +1,4 @@
+<view class="page">
+  <canvas id="webgl" type="webgl" class="webgl-canvas"></canvas>
+  <view class="hint">请把 GLB 模型放到 /assets/models/model.glb</view>
+</view>
