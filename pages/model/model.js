@@ -50,11 +50,24 @@ Page({
     modelUrl: 'assets/models/model.glb',
     scalePercent: 80,
     armAngle: 0,
-    headAngle: 0
+    headAngle: 0,
+    motor24SpeedHz: 300,
+    motor35SpeedHz: 300,
+    bleReady: false,
+    bleScanning: false,
+    bleConnected: false,
+    bleStatus: '蓝牙未初始化',
+    bleDevices: [],
+    bleDeviceName: '',
+    bleDeviceId: '',
+    bleServiceId: '',
+    bleCharacteristicId: '',
+    lastSentJson: ''
   },
 
   onReady() {
     this.initScene();
+    this.initBluetooth();
   },
 
   onScaleChanging(e) {
@@ -87,6 +100,26 @@ Page({
     this.applyHeadAngle(angle, true);
   },
 
+  onMotor24SpeedChanging(e) {
+    const speed = Number(e.detail.value);
+    this.applyMotor24Speed(speed, true);
+  },
+
+  onMotor24SpeedChange(e) {
+    const speed = Number(e.detail.value);
+    this.applyMotor24Speed(speed, true);
+  },
+
+  onMotor35SpeedChanging(e) {
+    const speed = Number(e.detail.value);
+    this.applyMotor35Speed(speed, true);
+  },
+
+  onMotor35SpeedChange(e) {
+    const speed = Number(e.detail.value);
+    this.applyMotor35Speed(speed, true);
+  },
+
   onUnload() {
     if (this._raf && this.canvas && this.canvas.cancelAnimationFrame) {
       this.canvas.cancelAnimationFrame(this._raf);
@@ -97,6 +130,7 @@ Page({
     if (this.renderer && this.renderer.dispose) {
       this.renderer.dispose();
     }
+    this.cleanupBluetooth();
   },
 
   onCanvasTouchStart(e) {
@@ -199,13 +233,255 @@ Page({
     return Math.sqrt(dx * dx + dy * dy);
   },
 
+  initBluetooth() {
+    wx.openBluetoothAdapter({
+      success: () => {
+        this.setData({
+          bleReady: true,
+          bleStatus: '蓝牙已就绪，等待连接'
+        });
+      },
+      fail: () => {
+        this.setData({
+          bleReady: false,
+          bleStatus: '请先开启手机蓝牙'
+        });
+      }
+    });
+  },
+
+  cleanupBluetooth() {
+    this._bleDeviceMap = null;
+    this._sendTimer = null;
+    wx.offBluetoothDeviceFound();
+    wx.stopBluetoothDevicesDiscovery({ fail: () => {} });
+    if (this.data.bleConnected && this.data.bleDeviceId) {
+      wx.closeBLEConnection({
+        deviceId: this.data.bleDeviceId,
+        fail: () => {}
+      });
+    }
+    wx.closeBluetoothAdapter({ fail: () => {} });
+  },
+
+  onTapScanBle() {
+    if (!this.data.bleReady) {
+      this.initBluetooth();
+      return;
+    }
+
+    this._bleDeviceMap = {};
+    this.setData({
+      bleDevices: [],
+      bleScanning: true,
+      bleStatus: '正在扫描附近设备...'
+    });
+
+    wx.offBluetoothDeviceFound();
+    wx.onBluetoothDeviceFound((res) => {
+      const found = res.devices || [];
+      if (!found.length) return;
+
+      found.forEach((d) => {
+        const name = d.name || d.localName || '未命名设备';
+        if (!d.deviceId) return;
+        this._bleDeviceMap[d.deviceId] = {
+          deviceId: d.deviceId,
+          name: name + ' (' + d.deviceId.slice(-6) + ')'
+        };
+      });
+
+      const list = Object.keys(this._bleDeviceMap).map((id) => this._bleDeviceMap[id]);
+      this.setData({ bleDevices: list });
+    });
+
+    wx.startBluetoothDevicesDiscovery({
+      allowDuplicatesKey: false,
+      success: () => {},
+      fail: () => {
+        this.setData({
+          bleScanning: false,
+          bleStatus: '扫描失败，请检查蓝牙权限'
+        });
+      }
+    });
+  },
+
+  onTapStopScanBle() {
+    wx.stopBluetoothDevicesDiscovery({
+      complete: () => {
+        this.setData({
+          bleScanning: false,
+          bleStatus: this.data.bleConnected ? '已连接，可发送控制数据' : '扫描已停止'
+        });
+      }
+    });
+  },
+
+  onTapConnectBle(e) {
+    const deviceId = e.currentTarget.dataset.id;
+    const name = e.currentTarget.dataset.name || '';
+    if (!deviceId) return;
+
+    wx.stopBluetoothDevicesDiscovery({ fail: () => {} });
+    this.setData({
+      bleScanning: false,
+      bleStatus: '正在连接设备...'
+    });
+
+    wx.createBLEConnection({
+      deviceId,
+      timeout: 10000,
+      success: () => {
+        this.resolveWritableCharacteristic(deviceId, name);
+      },
+      fail: () => {
+        this.setData({
+          bleConnected: false,
+          bleStatus: '连接失败，请重试'
+        });
+      }
+    });
+  },
+
+  resolveWritableCharacteristic(deviceId, name) {
+    wx.getBLEDeviceServices({
+      deviceId,
+      success: (sres) => {
+        const services = sres.services || [];
+        const walk = (idx) => {
+          if (idx >= services.length) {
+            this.setData({
+              bleStatus: '未找到可写入特征值'
+            });
+            return;
+          }
+          const svc = services[idx];
+          wx.getBLEDeviceCharacteristics({
+            deviceId,
+            serviceId: svc.uuid,
+            success: (cres) => {
+              const chars = cres.characteristics || [];
+              const writable = chars.find((c) => c.properties && (c.properties.write || c.properties.writeNoResponse));
+              if (writable) {
+                this.setData({
+                  bleConnected: true,
+                  bleDeviceId: deviceId,
+                  bleDeviceName: name || 'ESP32-S3',
+                  bleServiceId: svc.uuid,
+                  bleCharacteristicId: writable.uuid,
+                  bleStatus: '已连接，可发送控制数据'
+                });
+                this.sendMotorCommand('connect');
+              } else {
+                walk(idx + 1);
+              }
+            },
+            fail: () => walk(idx + 1)
+          });
+        };
+        walk(0);
+      },
+      fail: () => {
+        this.setData({ bleStatus: '读取服务失败' });
+      }
+    });
+  },
+
+  onTapDisconnectBle() {
+    const deviceId = this.data.bleDeviceId;
+    if (!deviceId) return;
+    wx.closeBLEConnection({
+      deviceId,
+      complete: () => {
+        this.setData({
+          bleConnected: false,
+          bleServiceId: '',
+          bleCharacteristicId: '',
+          bleDeviceId: '',
+          bleDeviceName: '',
+          bleStatus: '已断开连接'
+        });
+      }
+    });
+  },
+
+  scheduleSendMotorCommand(reason) {
+    if (this._sendTimer) {
+      clearTimeout(this._sendTimer);
+    }
+    this._sendTimer = setTimeout(() => {
+      this._sendTimer = null;
+      this.sendMotorCommand(reason);
+    }, 80);
+  },
+
+  sendMotorCommand(reason) {
+    const payload = {
+      cmd: 'lamp_motor_set',
+      reason: reason || 'update',
+      motor24: {
+        node: '斜杆_Arm_Oblique',
+        angle: Number((this.armAngle || 0).toFixed(2)),
+        speedHz: Number(this.motor24SpeedHz || this.data.motor24SpeedHz || 300)
+      },
+      motor35: {
+        node: '灯头_Head',
+        angle: Number((this.headAngle || 0).toFixed(2)),
+        speedHz: Number(this.motor35SpeedHz || this.data.motor35SpeedHz || 300)
+      },
+      ts: Date.now()
+    };
+    const json = JSON.stringify(payload);
+    this.setData({ lastSentJson: json });
+
+    if (!this.data.bleConnected || !this.data.bleDeviceId || !this.data.bleServiceId || !this.data.bleCharacteristicId) {
+      return;
+    }
+
+    this.writeBleJson(json);
+  },
+
+  writeBleJson(text) {
+    const maxLen = 20;
+    const chunks = [];
+    for (let i = 0; i < text.length; i += maxLen) {
+      chunks.push(text.slice(i, i + maxLen));
+    }
+    chunks.push('\n');
+
+    const writeNext = (idx) => {
+      if (idx >= chunks.length) return;
+      wx.writeBLECharacteristicValue({
+        deviceId: this.data.bleDeviceId,
+        serviceId: this.data.bleServiceId,
+        characteristicId: this.data.bleCharacteristicId,
+        value: this.stringToArrayBuffer(chunks[idx]),
+        success: () => writeNext(idx + 1),
+        fail: () => {
+          this.setData({ bleStatus: '发送失败，请检查连接' });
+        }
+      });
+    };
+    writeNext(0);
+  },
+
+  stringToArrayBuffer(str) {
+    const buf = new ArrayBuffer(str.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < str.length; i += 1) {
+      view[i] = str.charCodeAt(i) & 0xff;
+    }
+    return buf;
+  },
+
   applyScalePercent(percent, syncData) {
     if (!this.camera || !this.modelRadius) return;
     const clamped = Math.max(60, Math.min(100, Number(percent) || 80));
     this.scalePercent = clamped;
     const fill = clamped / 100;
     // Keep the model comfortably inside the framed viewport.
-    const visualFill = fill * 0.82;
+    const visualFill = fill * 0.95;
     const fovRad = (this.camera.fov * Math.PI) / 180;
     const distance = this.modelRadius / (visualFill * Math.tan(fovRad / 2));
 
@@ -224,6 +500,7 @@ Page({
     const clamped = Math.max(-135, Math.min(135, Number(angle) || 0));
     this.armAngle = clamped;
     this.applyMotorPose();
+    this.scheduleSendMotorCommand('motor24');
     if (syncData) {
       this.setData({ armAngle: clamped });
     }
@@ -233,8 +510,27 @@ Page({
     const clamped = Math.max(0, Math.min(50, Number(angle) || 0));
     this.headAngle = clamped;
     this.applyMotorPose();
+    this.scheduleSendMotorCommand('motor35');
     if (syncData) {
       this.setData({ headAngle: clamped });
+    }
+  },
+
+  applyMotor24Speed(speed, syncData) {
+    const clamped = Math.max(100, Math.min(1000, Number(speed) || 300));
+    this.motor24SpeedHz = clamped;
+    this.scheduleSendMotorCommand('motor24_speed');
+    if (syncData) {
+      this.setData({ motor24SpeedHz: clamped });
+    }
+  },
+
+  applyMotor35Speed(speed, syncData) {
+    const clamped = Math.max(100, Math.min(800, Number(speed) || 300));
+    this.motor35SpeedHz = clamped;
+    this.scheduleSendMotorCommand('motor35_speed');
+    if (syncData) {
+      this.setData({ motor35SpeedHz: clamped });
     }
   },
 
@@ -298,9 +594,10 @@ Page({
     wx.createSelectorQuery()
       .in(this)
       .select('#webgl')
-      .node()
+      .fields({ node: true, size: true })
       .exec((res) => {
-        const canvas = res && res[0] ? res[0].node : null;
+        const item = res && res[0] ? res[0] : null;
+        const canvas = item ? item.node : null;
         if (!canvas) {
           wx.showToast({ title: '找不到 Canvas', icon: 'none' });
           return;
@@ -329,8 +626,8 @@ Page({
 
         const sysInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
         const dpr = sysInfo.pixelRatio || 1;
-        const width = sysInfo.windowWidth;
-        const height = sysInfo.windowHeight;
+        const width = (item && item.width) || sysInfo.windowWidth;
+        const height = (item && item.height) || sysInfo.windowHeight;
         this.viewport = { width, height };
 
         const renderer = new THREE.WebGLRenderer({
@@ -374,14 +671,6 @@ Page({
                   modelRoot.add(model);
 
                   const box = new THREE.Box3().setFromObject(modelRoot);
-                  const sizeVec = box.getSize(new THREE.Vector3());
-                  const maxDim = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) || 1;
-
-                  // Normalize model to stable world size so different GLB exports look consistent.
-                  const targetWorldSize = 1.0;
-                  const uniformScale = targetWorldSize / maxDim;
-                  modelRoot.scale.setScalar(uniformScale);
-                  modelRoot.updateMatrixWorld(true);
 
                   const fittedBox = new THREE.Box3().setFromObject(modelRoot);
                   const center = fittedBox.getCenter(new THREE.Vector3());

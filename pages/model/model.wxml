@@ -15,60 +15,131 @@
 
   <view class="controls">
     <view class="panel">
-      <view class="label-row">
-        <view class="label">视角缩放</view>
-        <view class="value">{{scalePercent}}%</view>
+      <view class="panel-head">
+        <view class="panel-title">模型控制台</view>
+        <view class="panel-subtitle">简洁模式</view>
       </view>
-      <slider
-        class="size-slider"
-        min="60"
-        max="100"
-        step="1"
-        value="{{scalePercent}}"
-        activeColor="#007aff"
-        backgroundColor="#d7d8dd"
-        block-color="#ffffff"
-        block-size="20"
-        bindchanging="onScaleChanging"
-        bindchange="onScaleChange"
-      />
 
-      <view class="label-row">
-        <view class="label">24电机（斜杆左右）</view>
-        <view class="value">{{armAngle}}°</view>
+      <view class="control-item">
+        <view class="label-row">
+          <view class="label">视角缩放</view>
+          <view class="value">{{scalePercent}}%</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="60"
+          max="100"
+          step="1"
+          value="{{scalePercent}}"
+          activeColor="#0a84ff"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onScaleChanging"
+          bindchange="onScaleChange"
+        />
       </view>
-      <slider
-        class="size-slider"
-        min="-135"
-        max="135"
-        step="1"
-        value="{{armAngle}}"
-        activeColor="#007aff"
-        backgroundColor="#d7d8dd"
-        block-color="#ffffff"
-        block-size="20"
-        bindchanging="onArmAngleChanging"
-        bindchange="onArmAngleChange"
-      />
 
-      <view class="label-row second-row">
-        <view class="label">35电机（灯头上下）</view>
-        <view class="value">{{headAngle}}°</view>
+      <view class="control-item">
+        <view class="label-row">
+          <view class="label">24电机（斜杆左右）</view>
+          <view class="value">{{armAngle}}° / {{motor24SpeedHz}}Hz</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="-135"
+          max="135"
+          step="1"
+          value="{{armAngle}}"
+          activeColor="#0a84ff"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onArmAngleChanging"
+          bindchange="onArmAngleChange"
+        />
+        <view class="sub-label-row">
+          <view class="sub-label">24电机速度</view>
+          <view class="sub-value">{{motor24SpeedHz}}Hz</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="100"
+          max="1000"
+          step="10"
+          value="{{motor24SpeedHz}}"
+          activeColor="#34c759"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onMotor24SpeedChanging"
+          bindchange="onMotor24SpeedChange"
+        />
       </view>
-      <slider
-        class="size-slider"
-        min="0"
-        max="50"
-        step="1"
-        value="{{headAngle}}"
-        activeColor="#007aff"
-        backgroundColor="#d7d8dd"
-        block-color="#ffffff"
-        block-size="20"
-        bindchanging="onHeadAngleChanging"
-        bindchange="onHeadAngleChange"
-      />
-      <view class="hint">单指旋转视角，双指缩放视角（60% - 100%）</view>
+
+      <view class="control-item">
+        <view class="label-row">
+          <view class="label">35电机（灯头上下）</view>
+          <view class="value">{{headAngle}}° / {{motor35SpeedHz}}Hz</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="0"
+          max="50"
+          step="1"
+          value="{{headAngle}}"
+          activeColor="#0a84ff"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onHeadAngleChanging"
+          bindchange="onHeadAngleChange"
+        />
+        <view class="sub-label-row">
+          <view class="sub-label">35电机速度</view>
+          <view class="sub-value">{{motor35SpeedHz}}Hz</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="100"
+          max="800"
+          step="10"
+          value="{{motor35SpeedHz}}"
+          activeColor="#34c759"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onMotor35SpeedChanging"
+          bindchange="onMotor35SpeedChange"
+        />
+      </view>
+
+      <view class="section-title">智能硬件（ESP32-S3）</view>
+      <view class="ble-status">{{bleStatus}}</view>
+
+      <view class="ble-actions">
+        <button class="ble-btn" size="mini" bindtap="onTapScanBle">扫描设备</button>
+        <button class="ble-btn" size="mini" bindtap="onTapStopScanBle">停止扫描</button>
+        <button class="ble-btn" size="mini" bindtap="onTapDisconnectBle">断开连接</button>
+      </view>
+
+      <view class="device-list">
+        <view class="device-item" wx:for="{{bleDevices}}" wx:key="deviceId">
+          <view class="device-name">{{item.name}}</view>
+          <button
+            class="connect-btn"
+            size="mini"
+            data-id="{{item.deviceId}}"
+            data-name="{{item.name}}"
+            bindtap="onTapConnectBle"
+          >
+            连接
+          </button>
+        </view>
+      </view>
+
+      <view class="json-title">发送到台灯的 JSON</view>
+      <view class="json-box">{{lastSentJson || '{"cmd":"lamp_motor_set","motor24":{"angle":0,"speedHz":300},"motor35":{"angle":0,"speedHz":300}}'}}</view>
     </view>
   </view>
 </view>
