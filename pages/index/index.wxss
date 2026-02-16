@@ -1,0 +1,13 @@
+.entry-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f8;
+}
+
+.entry-text {
+  color: #8b8d95;
+  font-size: 28rpx;
+}

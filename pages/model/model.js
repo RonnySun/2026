@@ -295,10 +295,11 @@ Page({
     this._musicPrimarySrc = '/assets/music/ode_to_joy.mp3';
     this._musicFallbackSrc = '/assets/music/lamp_demo.wav';
     this._musicUsingFallback = false;
-    this.musicAudio.src = this._musicPrimarySrc;
+    this._musicResolved = false;
     this.musicAudio.onError(() => {
       if (!this._musicUsingFallback) {
         this._musicUsingFallback = true;
+        this._musicResolved = true;
         this.musicAudio.src = this._musicFallbackSrc;
         this.setData({ autoStatus: '欢乐颂未找到，已切回默认音乐' });
         return;
@@ -428,11 +429,41 @@ Page({
       autoStatus: '内置音乐自动摇摆',
       soundLevelPct: 55
     });
-    if (this.musicAudio) {
-      this.musicAudio.seek(0);
-      this.musicAudio.play();
-    }
+    this.resolveMusicSource(() => {
+      if (this.musicAudio) {
+        this.musicAudio.seek(0);
+        this.musicAudio.play();
+      }
+    });
     this.startAutoLoop();
+  },
+
+  resolveMusicSource(done) {
+    if (!this.musicAudio) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    if (this._musicResolved) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    const fs = wx.getFileSystemManager();
+    const primaryPath = this._musicPrimarySrc.replace(/^\//, '');
+    fs.access({
+      path: primaryPath,
+      success: () => {
+        this._musicUsingFallback = false;
+        this._musicResolved = true;
+        this.musicAudio.src = this._musicPrimarySrc;
+        if (typeof done === 'function') done();
+      },
+      fail: () => {
+        this._musicUsingFallback = true;
+        this._musicResolved = true;
+        this.musicAudio.src = this._musicFallbackSrc;
+        if (typeof done === 'function') done();
+      }
+    });
   },
 
   onTapStartMicSwing() {

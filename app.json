@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/index/index",
     "pages/model/model"
   ],
   "window": {
@@ -7,11 +8,6 @@
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f5f6f8"
-  },
-  "permission": {
-    "scope.record": {
-      "desc": "用于环境拾音驱动台灯自动摇摆"
-    }
   },
   "sitemapLocation": "sitemap.json"
 }
