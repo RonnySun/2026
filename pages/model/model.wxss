@@ -137,6 +137,130 @@
   font-weight: 620;
 }
 
+.auto-box {
+  margin-top: 10rpx;
+  padding: 10rpx 10rpx 9rpx;
+  border-radius: 14rpx;
+  background: rgba(246, 247, 251, 0.9);
+  border: 1rpx solid rgba(60, 60, 67, 0.12);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.75);
+}
+
+.auto-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auto-title {
+  font-size: 22rpx;
+  color: #1c1c1e;
+  font-weight: 620;
+}
+
+.auto-mode {
+  font-size: 18rpx;
+  color: #6a6d76;
+  font-weight: 560;
+}
+
+.auto-desc {
+  margin-top: 2rpx;
+  font-size: 18rpx;
+  color: #5f636f;
+}
+
+.auto-actions {
+  margin-top: 8rpx;
+  display: flex;
+  gap: 8rpx;
+}
+
+.auto-btn {
+  flex: 1;
+  margin: 0;
+  height: 50rpx;
+  line-height: 50rpx;
+  font-size: 18rpx;
+  border-radius: 14rpx;
+  background: rgba(246, 247, 251, 0.95);
+  color: #1f2024;
+  border: 1rpx solid rgba(60, 60, 67, 0.15);
+}
+
+.auto-btn.is-active {
+  background: #0a84ff;
+  color: #fff;
+  border-color: #0a84ff;
+}
+
+.auto-btn.stop-btn.is-active {
+  background: #545760;
+  border-color: #545760;
+}
+
+.level-row {
+  margin-top: 8rpx;
+  display: flex;
+  justify-content: space-between;
+}
+
+.level-label,
+.level-value {
+  font-size: 18rpx;
+  color: #5f636f;
+}
+
+.level-track {
+  margin-top: 4rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(148, 163, 184, 0.35);
+  overflow: hidden;
+}
+
+.level-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #34c759 0%, #0a84ff 100%);
+}
+
+.sensitivity-row {
+  margin-top: 8rpx;
+}
+
+.light-box {
+  margin-top: 10rpx;
+  padding: 10rpx 10rpx 9rpx;
+  border-radius: 14rpx;
+  background: rgba(246, 247, 251, 0.9);
+  border: 1rpx solid rgba(60, 60, 67, 0.12);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.75);
+}
+
+.light-switch-row {
+  margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.light-mode-segment {
+  margin-top: 8rpx;
+  display: flex;
+  gap: 8rpx;
+}
+
+.auto-btn.warm-active {
+  background: #ff9f0a;
+  border-color: #ff9f0a;
+}
+
+.auto-btn.white-active {
+  background: #0a84ff;
+  border-color: #0a84ff;
+}
+
 .ble-status {
   margin-top: 4rpx;
   color: #5f636f;

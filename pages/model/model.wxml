@@ -114,6 +114,115 @@
         />
       </view>
 
+      <view class="auto-box">
+        <view class="auto-title-row">
+          <view class="auto-title">音乐自动摇摆</view>
+          <view class="auto-mode">{{autoMode === 'off' ? '关闭' : (autoMode === 'music' ? '内置音乐' : '环境拾音')}}</view>
+        </view>
+        <view class="auto-desc">{{autoStatus}}</view>
+
+        <view class="auto-actions">
+          <button
+            class="auto-btn {{autoMode === 'music' ? 'is-active' : ''}}"
+            size="mini"
+            bindtap="onTapStartMusicSwing"
+          >
+            内置音乐
+          </button>
+          <button
+            class="auto-btn {{autoMode === 'mic' ? 'is-active' : ''}}"
+            size="mini"
+            bindtap="onTapStartMicSwing"
+          >
+            环境拾音
+          </button>
+          <button
+            class="auto-btn stop-btn {{autoMode === 'off' ? 'is-active' : ''}}"
+            size="mini"
+            bindtap="onTapStopAutoSwing"
+          >
+            停止
+          </button>
+        </view>
+
+        <view class="level-row">
+          <view class="level-label">音强</view>
+          <view class="level-value">{{soundLevelPct}}%</view>
+        </view>
+        <view class="level-track">
+          <view class="level-fill" style="width: {{soundLevelPct}}%;"></view>
+        </view>
+
+        <view class="sub-label-row sensitivity-row">
+          <view class="sub-label">拾音灵敏度</view>
+          <view class="sub-value">{{micSensitivity}}%</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="10"
+          max="100"
+          step="1"
+          value="{{micSensitivity}}"
+          activeColor="#0a84ff"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onMicSensitivityChanging"
+          bindchange="onMicSensitivityChange"
+        />
+      </view>
+
+      <view class="light-box">
+        <view class="auto-title-row">
+          <view class="auto-title">灯光控制</view>
+          <view class="auto-mode">{{ledOn ? (ledMode === 'warm' ? '暖光' : '白光') : '已关闭'}}</view>
+        </view>
+
+        <view class="light-switch-row">
+          <view class="sub-label">灯光开关</view>
+          <switch
+            checked="{{ledOn}}"
+            color="#34c759"
+            bindchange="onLedSwitchChange"
+          />
+        </view>
+
+        <view class="light-mode-segment">
+          <button
+            class="auto-btn {{ledMode === 'warm' ? 'is-active warm-active' : ''}}"
+            size="mini"
+            bindtap="onTapWarmLight"
+          >
+            暖光
+          </button>
+          <button
+            class="auto-btn {{ledMode === 'white' ? 'is-active white-active' : ''}}"
+            size="mini"
+            bindtap="onTapWhiteLight"
+          >
+            白光
+          </button>
+        </view>
+
+        <view class="sub-label-row sensitivity-row">
+          <view class="sub-label">亮度</view>
+          <view class="sub-value">{{ledBrightness}}%</view>
+        </view>
+        <slider
+          class="size-slider"
+          min="1"
+          max="100"
+          step="1"
+          value="{{ledBrightness}}"
+          activeColor="#ff9f0a"
+          backgroundColor="#d6d8df"
+          block-color="#ffffff"
+          block-size="20"
+          bindchanging="onLedBrightnessChanging"
+          bindchange="onLedBrightnessChange"
+        />
+      </view>
+
       <view class="section-title">智能硬件（ESP32-S3）</view>
       <view class="ble-status">{{bleStatus}}</view>
 
@@ -139,7 +248,7 @@
       </view>
 
       <view class="json-title">发送到台灯的 JSON</view>
-      <view class="json-box">{{lastSentJson || '{"cmd":"lamp_motor_set","motor24":{"angle":0,"speedHz":300},"motor35":{"angle":0,"speedHz":300}}'}}</view>
+      <view class="json-box">{{lastSentJson || '{"cmd":"lamp_motor_set","motor24":{"angle":0,"speedHz":300},"motor35":{"angle":0,"speedHz":300},"light":{"on":true,"mode":"warm","brightness":75}}'}}</view>
     </view>
   </view>
 </view>
