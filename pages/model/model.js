@@ -114,7 +114,7 @@ Page({
         this.renderer = renderer;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf2f3f5);
+        scene.background = new THREE.Color(0xdddddf);
 
         const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
         camera.position.set(1.8, 1.2, 2.2);
@@ -145,14 +145,33 @@ Page({
                   scene.add(model);
 
                   const box = new THREE.Box3().setFromObject(model);
-                  const size = box.getSize(new THREE.Vector3()).length();
-                  const center = box.getCenter(new THREE.Vector3());
+                  const sizeVec = box.getSize(new THREE.Vector3());
+                  const maxDim = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) || 1;
+
+                  // Normalize model to stable world size so different GLB exports look consistent.
+                  const targetWorldSize = 1.0;
+                  const uniformScale = targetWorldSize / maxDim;
+                  model.scale.setScalar(uniformScale);
+                  model.updateMatrixWorld(true);
+
+                  const fittedBox = new THREE.Box3().setFromObject(model);
+                  const center = fittedBox.getCenter(new THREE.Vector3());
+                  const sphere = fittedBox.getBoundingSphere(new THREE.Sphere());
+                  const radius = Math.max(sphere.radius, 0.001);
 
                   model.position.sub(center);
-                  camera.near = size / 100;
-                  camera.far = size * 100;
+                  model.updateMatrixWorld(true);
+
+                  // Keep model at roughly 20% of screen height (within your 10%-30% target range).
+                  const desiredFill = 0.2;
+                  const fovRad = (camera.fov * Math.PI) / 180;
+                  const distance = radius / (desiredFill * Math.tan(fovRad / 2));
+
+                  camera.near = Math.max(0.01, distance / 100);
+                  camera.far = distance * 20;
+                  camera.position.set(distance * 0.18, distance * 0.08, distance);
+                  camera.lookAt(0, 0, 0);
                   camera.updateProjectionMatrix();
-                  camera.position.set(size * 0.7, size * 0.5, size * 0.9);
 
                   if (OrbitControls) {
                     try {
