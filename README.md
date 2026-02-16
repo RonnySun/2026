@@ -1,0 +1,3 @@
+# xiaobu
+
+Initialized Git repository.
